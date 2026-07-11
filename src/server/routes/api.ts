@@ -8,6 +8,12 @@ type ErrorResponse = {
   message: string;
 };
 
+// Below this, a "solve" isn't physically plausible (locate one odd tile among
+// 25 and tap it) — reject it rather than let a direct API call fake a time.
+// This is a floor, not real anti-cheat: a replayed/adjusted-but-plausible
+// time can't be caught this way. Good enough for a hackathon MVP.
+const MIN_PLAUSIBLE_SOLVE_MS = 300;
+
 export const api = new Hono();
 
 api.get('/status', async (c) => {
@@ -28,8 +34,11 @@ api.get('/status', async (c) => {
 api.post('/solve', async (c) => {
   const body = await c.req.json<SolveRequest>();
 
-  if (typeof body.timeMs !== 'number' || !Number.isFinite(body.timeMs) || body.timeMs < 0) {
-    return c.json<ErrorResponse>({ status: 'error', message: 'timeMs must be a non-negative number' }, 400);
+  if (typeof body.timeMs !== 'number' || !Number.isFinite(body.timeMs) || body.timeMs < MIN_PLAUSIBLE_SOLVE_MS) {
+    return c.json<ErrorResponse>(
+      { status: 'error', message: `timeMs must be a realistic solve time (>= ${MIN_PLAUSIBLE_SOLVE_MS}ms)` },
+      400
+    );
   }
 
   const username = await reddit.getCurrentUsername();

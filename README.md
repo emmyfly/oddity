@@ -1,30 +1,63 @@
-## Devvit Phaser Starter
+# Oddity
 
-A starter to build web applications on Reddit's developer platform
+Oddity is a daily puzzle game for Reddit. Every day, all players worldwide see
+the exact same 5×5 grid of shapes — every tile is identical except one "odd"
+tile that differs in color, shape, or rotation. Find it and tap it as fast as
+you can. Wrong taps add a small time penalty instead of failing you outright.
 
-- [Devvit](https://developers.reddit.com/): A way to build and deploy immersive games on Reddit
-- [Vite](https://vite.dev/): For compiling the webView
-- [Phaser](https://phaser.io/): 2D game engine
-- [Hono](https://hono.dev/): For backend logic
-- [TypeScript](https://www.typescriptlang.org/): For type safety
+Oddity is for anyone who enjoys quick daily puzzles in the style of Wordle —
+no account setup, no tutorial, just open the post and play. Solving builds a
+daily streak (tracked per-Reddit-account) and a personal best time, and you
+can copy a spoiler-free result ("Oddity #12 — 2.4s ⏱️ Streak: 6 🔥") to share
+in comments. Each puzzle can only be played once per day per account; if you
+reopen the post after solving, you'll see your existing result instead of a
+fresh grid.
 
-## Getting Started
+**Critical operational notes:**
 
-> Make sure you have Node 22 downloaded on your machine before running!
+- Puzzles are generated deterministically from the current UTC date — no
+  server-side puzzle authoring is needed, and there is nothing to moderate
+  about puzzle content itself.
+- Per-user progress (streak, best time, last-played date) is stored in Redis,
+  keyed to the player's Reddit username, and expires automatically after 30
+  days of inactivity per Reddit's data retention guidance.
+- The game requires the player to be logged in to Reddit to save progress;
+  logged-out visitors can still play but their result won't persist.
 
-1. Run `npm create devvit@latest --template=phaser`
-2. Go through the installation wizard. You will need to create a Reddit account and connect it to Reddit developers
-3. Copy the command on the success page into your terminal
+## How to play
 
-## Commands
+1. Open an Oddity post and tap **Play**.
+2. Find the one tile that looks different from all the others and tap it.
+3. Wrong taps add a 0.5s penalty — the timer keeps running.
+4. On solving, you'll see your time, current streak, and (if applicable) a
+   new personal best, plus a button to copy a shareable result.
+5. Come back the next day (UTC) for a new puzzle and to keep your streak.
 
-- `npm run dev`: Starts a development server where you can develop your application live on Reddit.
-- `npm run build`: Builds your client and server projects
-- `npm run deploy`: Uploads a new version of your app
-- `npm run launch`: Publishes your app for review
-- `npm run login`: Logs your CLI into Reddit
-- `npm run type-check`: Type checks, lints, and prettifies your app
+## For moderators: creating a post
 
-## Credits
+Use the subreddit's three-dot menu → **Create a new Oddity post** to publish
+a new game post to the community. This is the only moderator-facing action
+the app exposes.
 
-Thanks to the Phaser team for [providing a great template](https://github.com/phaserjs/template-vite-ts)!
+## Configure & deploy (for developers)
+
+Requires Node ≥22.2.0.
+
+1. `npm install`
+2. `npm run login` — authenticates the Devvit CLI with your Reddit account
+   (opens a browser window).
+3. `npm run dev` — runs `devvit playtest`: builds the app, installs it to a
+   small test subreddit, and live-reloads on every save.
+4. `npm run type-check` / `npm run lint` / `npm test` — verify changes before
+   publishing.
+5. `npm run deploy` — type-checks, lints, and uploads a new app version.
+6. `npm run launch` — deploys and submits the app for Reddit's app review.
+
+## Tech stack
+
+- [Devvit Web](https://developers.reddit.com/): Reddit's developer platform
+  (Redis storage, Reddit API access, app hosting)
+- [Phaser](https://phaser.io/): 2D rendering and input for the puzzle grid
+- [Hono](https://hono.dev/): server-side routing
+- [Vite](https://vite.dev/) + [TypeScript](https://www.typescriptlang.org/):
+  build tooling and type safety

@@ -5,6 +5,12 @@ import type { SolveResponse, StatusResponse } from '../../shared/api';
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
+// Reddit's Devvit Rules recommend auto-expiring stored user data within 30
+// days of inactivity (see "Setting Up Auto-Deletion" in the Devvit Rules).
+// This is refreshed on every solve, so it's a rolling 30-day inactivity
+// window, not a fixed expiry from account creation.
+const RETENTION_SECONDS = 30 * 24 * 60 * 60;
+
 function redisKey(username: string): string {
   return `oddity:streak:${username}`;
 }
@@ -63,6 +69,7 @@ export async function recordSolve(
     bestTimeMs: String(record.bestTimeMs),
     lastTimeMs: String(record.lastTimeMs),
   });
+  await redis.expire(key, RETENTION_SECONDS);
 
   return { streak: record.streak, bestTimeMs: record.bestTimeMs, isNewBest };
 }
